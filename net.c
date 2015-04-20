@@ -20,11 +20,13 @@
 #include <gio/gio.h>
 
 #include "pca9685.h"
+#include "sn3218.h"
 #include "net.h"
 
 static GSocket *socket;
 static GSource *source;
 static int pca9685;
+static int sn3218;
 
 static gboolean udp_received(GSocket *sock, GIOCondition condition, gpointer data)
 {
@@ -56,11 +58,27 @@ static gboolean udp_received(GSocket *sock, GIOCondition condition, gpointer dat
     return TRUE;
 }
 
+static gboolean test_lights(gpointer unused, gboolean ignored)
+{
+    static int l = 17;
+
+    sn3218_set_light(sn3218, l, 0);
+
+    l += 1;
+    if (l == 5) l = 13;
+    l = l % 18;
+
+    sn3218_set_light(sn3218, l, 255);
+
+    return TRUE;
+}
+
 void net_start(void)
 {
     GError *err = NULL;
 
     pca9685 = pca9685_open(1, 0x60);
+    sn3218 = sn3218_open(1, 0x54);
 
     socket = g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err);
     g_assert(err == NULL);
@@ -73,6 +91,8 @@ void net_start(void)
     source = g_socket_create_source(socket, G_IO_IN, NULL);
     g_source_set_callback(source, (GSourceFunc)udp_received, NULL, NULL);
     g_source_attach(source, NULL);
+
+    g_timeout_add(150, (GSourceFunc)test_lights, NULL);
 }
 
 void net_stop(void)
