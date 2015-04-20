@@ -1,9 +1,12 @@
-Wi-Fi remote control vehicle with Raspberry Pi
-
 https://github.com/ali1234/piroverd
+
+Implements a Wi-Fi first-person-video vehicle. Video is captured from
+the rpi camera, encoded to h264 by the GPU, and streamed over rtsp
+by gstreamer. Control input is received over UDP.
 
 Dependencies:
 
+ - gst-rpicamsrc (https://github.com/thaytan/gst-rpicamsrc)
  - gstrtspserver-1.0
  - gstreamer-1.0
  - gio-2.0
