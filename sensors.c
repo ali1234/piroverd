@@ -26,6 +26,9 @@
 
 #include "sensors.h"
 
+#include <math.h>
+#include "mathfunc.h"
+
 static int max17043;
 static int mpu6050;
 static int ak8975;
@@ -34,6 +37,7 @@ static float acceleration[3];
 static float rotation[3];
 static float magnetism[3];
 static float voltage, percent;
+static float heading, pitch, roll;
 
 static GMutex sensor_mutex;
 
@@ -44,7 +48,7 @@ static gboolean slow_update(gpointer unused, gboolean ignored)
     voltage = max17043_voltage(max17043);
     percent = max17043_percent(max17043);
 
-    g_print("%.2fV %.0f%%\n", voltage, percent);
+    g_print("%4.2fV %3.0f%%  %3.0fH %3.0fP %3.0fR\n", voltage, percent, heading, pitch, roll);
 
     g_mutex_unlock (&sensor_mutex);
 
@@ -53,11 +57,28 @@ static gboolean slow_update(gpointer unused, gboolean ignored)
 
 static gboolean fast_update(gpointer unused, gboolean ignored)
 {
+    float forward[3] = {0, 1, 0};
+    float north[3];
+    float tmp[3];
+
     g_mutex_lock (&sensor_mutex);
 
     mpu6050_get_acceleration(mpu6050, acceleration);
     mpu6050_get_rotation(mpu6050, rotation);
     ak8975_get_magnetism(ak8975, magnetism);
+
+    pitch = 180.0*unsigned_angle_between(forward, acceleration)/3.141;
+    pitch -= 90;
+
+    projection(magnetism, acceleration, north);
+    subtract(magnetism, north, north);
+    normalise(north);
+
+    projection(forward, acceleration, tmp);
+    subtract(forward, tmp, tmp);
+
+    heading = 180.0*angle_between(north, tmp, acceleration)/3.14159;
+    heading += 180;
 
     g_mutex_unlock (&sensor_mutex);
 
@@ -90,7 +111,7 @@ void sensors_get_annotation(char *buf)
 {
     g_mutex_lock (&sensor_mutex);
 
-    sprintf(buf, "%.2fV %.0f%%", voltage, percent);
+    sprintf(buf, "%.2fV %.0f%%  %3.0fH %3.0fP %3.0fR", voltage, percent, heading, pitch, roll);
 
     g_mutex_unlock (&sensor_mutex);
 }
