@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <unistd.h>
+#include <glib.h>
 #include <linux/i2c-dev.h>
 
 #include "i2c.h"
@@ -35,6 +35,7 @@ static unsigned char motors[4][3] = {
 
 int pca9685_open(int adapter, int address)
 {
+
     int device = i2c_open(adapter, address);
 
     if (device == -1)
@@ -47,19 +48,19 @@ int pca9685_open(int adapter, int address)
 
     i2c_smbus_write_byte_data(device, 0x01, 0x04);
     i2c_smbus_write_byte_data(device, 0x00, 0x01);
-    sleep(1);
+    g_usleep(500);
 
     i2c_smbus_write_byte_data(device, 0x00, 0x01);
-    sleep(1);
+    g_usleep(500);
 
     i2c_smbus_write_byte_data(device, 0x00, 0x11);
     i2c_smbus_write_byte_data(device, 0xFE, 0x03);
 
     i2c_smbus_write_byte_data(device, 0x00, 0x01);
-    sleep(1);
+    g_usleep(500);
 
     i2c_smbus_write_byte_data(device, 0x00, 0x81);
-    sleep(1);
+    g_usleep(500);
 
     return device;
 }
