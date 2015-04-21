@@ -4,6 +4,17 @@ Implements a Wi-Fi first-person-video vehicle. Video is captured from
 the rpi camera, encoded to h264 by the GPU, and streamed over rtsp
 by gstreamer. Control input is received over UDP.
 
+Hardware used:
+
+ - Raspberry Pi Model A+
+ - Raspberry Pi Camera
+ - Adafruit DC motor hat (PCA9685)
+ - Sparkfun lipo fuel gauge (MAX17043)
+ - Pimoroni 18 Channel LED driver (SN3218)
+ - Ebay Special MPU9150 9DOF motion sensor (MPU6050+AK8975)
+
+Full construction details to be released later...
+
 Dependencies:
 
  - gst-rpicamsrc (https://github.com/thaytan/gst-rpicamsrc)
