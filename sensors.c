@@ -111,7 +111,7 @@ void sensors_get_annotation(char *buf)
 {
     g_mutex_lock (&sensor_mutex);
 
-    sprintf(buf, "%.2fV %.0f%%  %3.0fH %3.0fP %3.0fR", voltage, percent, heading, pitch, roll);
+    sprintf(buf, "%4.2fV %3.0f%% | %3.0fH %3.0fP", voltage, percent, heading, pitch);
 
     g_mutex_unlock (&sensor_mutex);
 }
