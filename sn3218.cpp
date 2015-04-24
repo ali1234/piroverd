@@ -1,4 +1,4 @@
-/* sn3218.c -- i2c pwm driver
+/* sn3218.cpp -- i2c pwm driver
  *
  * Copyright (C) 2015 Alistair Buxton <a.j.buxton@gmail.com>
  *
@@ -16,41 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <linux/i2c-dev.h>
-
-#include "i2c.h"
 #include "sn3218.h"
 
-int sn3218_open(int adapter, int address)
+SN3218::SN3218(int adapter, int address) : I2CDevice(adapter, address)
 {
-    int device = i2c_open(adapter, address);
-
-    if (device == -1)
-        return -1;
-
-    i2c_smbus_write_byte_data(device, 0, 1);
-
-    return device;
+    write8(0, 1);
 }
 
-void sn3218_close(int device)
+SN3218::~SN3218()
 {
-    i2c_close(device);
+    ;
 }
 
-void sn3218_set_light(int device, int light, int brightness)
+void SN3218::set_light(int light, int brightness)
 {
     if (brightness > 255) brightness = 255;
     else if (brightness < 0) brightness = 0;
 
-    i2c_smbus_write_byte_data(device, light+1, brightness);
+    write8(light+1, brightness);
     int reg = 19 + (light / 6);
     int bit = 1 << (light % 6);
-    __u8 ctrl = i2c_smbus_read_byte_data(device, reg);
+    __u8 ctrl = read8(reg);
     if (brightness == 0) ctrl &= ~bit;
     else ctrl |= bit;
 
-    i2c_smbus_write_byte_data(device, reg, ctrl);
-    i2c_smbus_write_byte_data(device, 22, 0);
+    write8(reg, ctrl);
+    write8(22, 0);
 
 }

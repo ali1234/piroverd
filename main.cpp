@@ -1,4 +1,4 @@
-/* main.c -- piroverd
+/* main.cpp -- piroverd
  *
  * Copyright (C) 2015 Alistair Buxton <a.j.buxton@gmail.com>
  *
@@ -23,9 +23,31 @@
 #include <gst/rtsp-server/rtsp-server.h>
 
 #include "sensors.h"
-#include "net.h"
+#include "outputs.h"
 
-static gboolean cleanup_sessions (GstRTSPServer *server, gboolean ignored)
+static Outputs *outputs;
+static Sensors *sensors;
+
+static gboolean udp_received(GSocket *sock, GIOCondition condition, gpointer data)
+{
+    char buf[1024];
+    gsize bytes_read;
+    GSocketAddress *address;
+    GError *err = NULL;
+
+    if (condition & G_IO_HUP) return FALSE;
+
+    bytes_read = g_socket_receive_from(sock, &address, buf, sizeof(buf), NULL, &err);
+    g_assert (err == NULL);
+
+    outputs->handle_control_packet(buf);
+
+    return TRUE;
+}
+
+
+
+static gboolean cleanup_sessions (GstRTSPServer *server)
 {
     GstRTSPSessionPool *pool;
 
@@ -36,14 +58,19 @@ static gboolean cleanup_sessions (GstRTSPServer *server, gboolean ignored)
     return TRUE;
 }
 
-static gboolean annotation_update (GstElement *rpicam, gboolean ignored)
+static gboolean annotation_update (GstElement *rpicam)
 {
 
     if(GST_OBJECT_REFCOUNT_VALUE(rpicam) == 1) return FALSE;
 
     char buf[100];
 
-    sensors_get_annotation(buf);
+    sensors->update_battery();
+    sensors->update_orientation();
+    sensors->get_annotation(buf);
+
+    g_print(buf);
+    g_print("\n");
 
     gst_util_set_object_arg (G_OBJECT (rpicam), "annotation-text", buf);
 
@@ -72,10 +99,14 @@ int main(int argc, char *argv[])
     GstRTSPMountPoints *mounts;
     GstRTSPMediaFactory *factory;
 
+    GSocket *socket;
+    GSource *source;
+    GError *err = NULL;
+
     gst_init (&argc, &argv);
 
-    sensors_start(1);
-    net_start();
+    sensors = new Sensors(1);
+    outputs = new Outputs(1);
 
     loop = g_main_loop_new (NULL, FALSE);
 
@@ -97,5 +128,21 @@ int main(int argc, char *argv[])
 
     g_timeout_add_seconds (2, (GSourceFunc)cleanup_sessions, server);
 
+    socket = g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err);
+    g_assert(err == NULL);
+    g_socket_bind(socket,
+        g_inet_socket_address_new(g_inet_address_new_any(G_SOCKET_FAMILY_IPV4), 5005),
+        TRUE, &err);
+    g_assert(err == NULL);
+
+    source = g_socket_create_source(socket, G_IO_IN, NULL);
+    g_source_set_callback(source, (GSourceFunc)udp_received, NULL, NULL);
+    g_source_attach(source, NULL);
+//    g_object_unref(source);
+//    g_object_unref(socket);
+
     g_main_loop_run (loop);
+
+    delete outputs;
+    delete sensors;
 }

@@ -1,4 +1,4 @@
-/* i2c.c -- i2c helper functions
+/* max17043.cpp -- i2c single cell lipo fuel gauge driver
  *
  * Copyright (C) 2015 Alistair Buxton <a.j.buxton@gmail.com>
  *
@@ -16,35 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <math.h>
 
-#include <linux/i2c-dev.h>
+#include "max17043.h"
 
-#include "i2c.h"
-
-int i2c_open(int adapter, int address)
+MAX17043::MAX17043(int adapter, int address) : I2CDevice(adapter, address)
 {
-    char filename[20];
 
-    snprintf(filename, 19, "/dev/i2c-%d", adapter);
-    int device = open(filename, O_RDWR|O_NONBLOCK);
-    if (device < 0) {
-        fprintf(stderr, "Error opening i2c adapter.\n");
-        return -1;
-    }
-    if (ioctl(device, I2C_SLAVE, address) < 0) {
-        fprintf(stderr, "Error setting i2c device address.\n");
-        return -1;
-    }
-    return device;
+    __u16 config = read16(MAX17043_CONFIG);
+    config &= ~MAX17043_CONFIG_SLEEP;
+    write16(MAX17043_CONFIG, config);
 }
 
-void i2c_close(int device)
+MAX17043::~MAX17043()
 {
-    close(device);
+    __u16 config = read16(MAX17043_CONFIG);
+    config |= MAX17043_CONFIG_SLEEP;
+    write16(MAX17043_CONFIG, config);
 }
+
+
+
+float MAX17043::get_voltage(void)
+{
+    return (BYTESWAP(read16(MAX17043_VCELL)) >> 4) * 0.00125;
+}
+
+float MAX17043::get_percent(void)
+{
+    return BYTESWAP(read16(MAX17043_SOC)) / 256.0;
+}
+

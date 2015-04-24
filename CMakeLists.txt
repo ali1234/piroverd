@@ -4,19 +4,18 @@ PROJECT(piroverd)
 
 SET(piroverd_SOURCES
 
-  main.c
-  i2c.c
-  mpu6050.c
-  ak8975.c
-  sn3218.c
-  max17043.c
-  pca9685.c
-  sensors.c
-  net.c
+  main.cpp
+  i2cdevice.cpp
+  mpu6050.cpp
+  ak8975.cpp
+  sn3218.cpp
+  max17043.cpp
+  pca9685.cpp
+  sensors.cpp
+  outputs.cpp
 
 )
 
-ADD_DEFINITIONS(-std=c99)
 
 INCLUDE(FindPkgConfig)
 

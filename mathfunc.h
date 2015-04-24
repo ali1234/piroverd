@@ -1,3 +1,5 @@
+#ifndef PIROVERD_MATHFUNC_H
+#define PIROVERD_MATHFUNC_H
 
 static inline float squared_length(float *v)
 {
@@ -57,3 +59,5 @@ static inline float angle_between(float *u, float *v, float *n)
     if(dot_product(n, cross) > 0) angle *= -1;
     return angle;
 }
+
+#endif // PIROVERD_MATHFUNC_H

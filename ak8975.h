@@ -1,9 +1,14 @@
-#ifndef PIROVER_AK8975_H
-#define PIROVER_AK8975_H
+#ifndef PIROVERD_AK8975_H
+#define PIROVERD_AK8975_H
 
-int ak8975_open(int, int);
-void ak8975_close(int);
+#include "i2cdevice.h"
 
-void ak8975_get_magnetism(int, float *);
+class AK8975 : public I2CDevice
+{
+    public:
+        AK8975(int adapter, int address);
+        ~AK8975();
+        void get_magnetism(float*);
+};
 
-#endif // PIROVER_AK8975_H
+#endif // PIROVERD_AK8975_H

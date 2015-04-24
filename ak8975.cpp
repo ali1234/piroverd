@@ -1,4 +1,4 @@
-/* ak8975.c -- i2c magnetometer driver
+/* ak8975.cpp -- i2c magnetometer driver
  *
  * Copyright (C) 2015 Alistair Buxton <a.j.buxton@gmail.com>
  *
@@ -16,42 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <linux/i2c-dev.h>
+#include <glib.h>
 
-#include "i2c.h"
 #include "ak8975.h"
 
 int min[3] = { -254, -97, -159 };
 int max[3] = { 22, 191, 130 };
 
-int ak8975_open(int adapter, int address)
+AK8975::AK8975(int adapter, int address) : I2CDevice(adapter, address)
 {
-    int device = i2c_open(adapter, address);
-
-    if (device == -1)
-        return -1;
-
-    i2c_smbus_write_byte_data(device, 0x0A, 0x01);
-
-    return device;
+    write8(0x0A, 0x01);
 }
 
-void ak8975_close(int device)
+AK8975::~AK8975()
 {
-    i2c_smbus_write_byte_data(device, 0x0A, 0x00);
-
-    i2c_close(device);
+    write8(0x0A, 0x00);
 }
 
-void ak8975_get_magnetism(int device, float *m)
+void AK8975::get_magnetism(float *m)
 {
     __s16 tmp[3];
 
-    tmp[0] = i2c_smbus_read_word_data(device, 0x03);
-    tmp[1] = i2c_smbus_read_word_data(device, 0x05);
-    tmp[2] = i2c_smbus_read_word_data(device, 0x07);
+    tmp[0] = read8(0x03)|(read8(0x04) << 8);
+    tmp[1] = read8(0x05)|(read8(0x06) << 8);
+    tmp[2] = read8(0x07)|(read8(0x08) << 8);
 
-    i2c_smbus_write_byte_data(device, 0x0A, 0x01);
+    write8(0x0A, 0x01);
 
     m[1] = ( (tmp[0] - min[0]) / (0.5 * (max[0] - min[0])) ) - 1.0;
     m[0] = ( (tmp[1] - min[1]) / (0.5 * (max[1] - min[1])) ) - 1.0;
