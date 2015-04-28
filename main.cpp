@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
 
     factory = gst_rtsp_media_factory_new ();
     gst_rtsp_media_factory_set_launch (factory, "( "
-        "rpicamsrc name=rpicam annotation-mode=custom-text preview=false do-timestamp=true bitrate=1000000"
-        " ! video/x-h264, width=960, height=540 ! h264parse ! rtph264pay name=pay0 config-interval=1"
+        "rpicamsrc name=rpicam annotation-mode=custom-text annotation-text=\"hello\" preview=false bitrate=2000000"
+        " ! video/x-h264, width=960, height=540, framerate=15/1 ! h264parse ! rtph264pay name=pay0 config-interval=1"
         " )");
 
     g_signal_connect (factory, "media-configure", (GCallback) media_configure, NULL);

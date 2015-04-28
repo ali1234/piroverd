@@ -47,4 +47,28 @@ void Outputs::handle_control_packet(char *buf)
             pca9685->set_motor_mode(n, 1);
         }
     }
+    int headlight = (buf[9]&1)?255:0;
+    sn3218->set_light(HEADLIGHT_RIGHT_OUTER, headlight);
+    sn3218->set_light(HEADLIGHT_RIGHT_INNER, headlight);
+    sn3218->set_light(HEADLIGHT_LEFT_INNER, headlight);
+    sn3218->set_light(HEADLIGHT_LEFT_OUTER, headlight);
+
+    int taillight = (buf[9]&2)?255:0;
+    sn3218->set_light(TAILLIGHT_LEFT, taillight);
+    sn3218->set_light(TAILLIGHT_RIGHT, taillight);
+
+    if(buf[9]&4) {
+        sn3218->set_light(INDICATOR_RIGHT_REAR, 255);
+        sn3218->set_light(INDICATOR_LEFT_REAR, 255);
+        sn3218->set_light(INDICATOR_RIGHT_FRONT, 255);
+        sn3218->set_light(INDICATOR_LEFT_FRONT, 255);
+
+        g_usleep(5000);
+
+        sn3218->set_light(INDICATOR_RIGHT_REAR, 0);
+        sn3218->set_light(INDICATOR_LEFT_REAR, 0);
+        sn3218->set_light(INDICATOR_RIGHT_FRONT, 0);
+        sn3218->set_light(INDICATOR_LEFT_FRONT, 0);
+    }
+
 }
